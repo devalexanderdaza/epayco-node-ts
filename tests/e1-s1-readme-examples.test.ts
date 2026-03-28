@@ -1,11 +1,11 @@
 // PSEUDOCÓDIGO (plan):
-// 1) Reemplazar imports con prefijo "node:" por imports estándar ("fs", "path").
+// 1) Usar imports de módulos nativos de Node con prefijo "node:".
 // 2) Mantener la lógica del test.
 // 3) Evitar posibles undefined en capturas de regex usando valor por defecto.
 // 4) Conservar validaciones actuales y expectativas finales.
 
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("E1-S1: README Examples Structure", () => {

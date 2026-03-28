@@ -244,6 +244,11 @@ epayco.plans
   });
 ```
 
+#### Unsupported operations
+
+- `plans.update` is not supported in the current SDK cycle (PD-1 decision).
+- Semver impact: patch (documentation clarification only; method never existed).
+
 ### Subscriptions
 
 #### Create

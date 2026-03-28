@@ -26,28 +26,19 @@ describe("E1-S2: Plans.update Contract", () => {
 
 describe("E1-S2: PlanUpdateOptions Type Contract", () => {
   it("should NOT export PlanUpdateOptions type", async () => {
-    try {
-      const types = await import("@/types");
-      const exportedTypes = Object.keys(types);
-      expect(exportedTypes).not.toContain("PlanUpdateOptions");
-    } catch (error) {
-      // If import fails, consider it as not containing the type
-      expect(true).toBe(true);
-    }
+    const types = await import("@/types");
+    const exportedTypes = Object.keys(types);
+    expect(exportedTypes).not.toContain("PlanUpdateOptions");
   });
 
   it("should NOT export any Update-related plan types", async () => {
-    try {
-      const types = await import("@/types");
-      const exportedTypes = Object.keys(types);
-      const updateTypes = exportedTypes.filter(
-        (type) =>
-          type.toLowerCase().includes("update") &&
-          type.toLowerCase().includes("plan"),
-      );
-      expect(updateTypes).toEqual([]);
-    } catch (error) {
-      expect(true).toBe(true);
-    }
+    const types = await import("@/types");
+    const exportedTypes = Object.keys(types);
+    const updateTypes = exportedTypes.filter(
+      (type) =>
+        type.toLowerCase().includes("update") &&
+        type.toLowerCase().includes("plan"),
+    );
+    expect(updateTypes).toEqual([]);
   });
 });
