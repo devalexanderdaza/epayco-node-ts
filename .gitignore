@@ -6,6 +6,7 @@ package-lock.json
 bun.lock
 references/
 _bmad*
+!_bmad-output/
 .cursor/plans
 .cursor/skills
 .github/skills

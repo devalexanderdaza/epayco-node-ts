@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
+    "types": ["node"],
     "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
@@ -10,7 +11,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDirs": ["src", "tests"],
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -19,6 +20,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src", "tests"],
+  "exclude": ["node_modules", "dist"]
 }
