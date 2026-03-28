@@ -14,6 +14,9 @@ stepsCompleted:
   - step-10-nonfunctional.md
   - step-11-polish.md
   - step-12-complete.md
+  - step-e-01-discovery.md
+  - step-e-02-review.md
+  - step-e-03-edit.md
 inputDocuments:
   - references/EPAYCO_NODE_TS_DEVELOPMENT_SPEC.md
   - references/TECH_REPORT.md
@@ -22,12 +25,17 @@ inputDocuments:
   - README.md
   - src/
 workflowType: prd
+workflow: edit
 documentLanguage: English
 projectContext: brownfield
 classification:
   projectType: developer_tool
   domain: fintech
   complexity: high
+lastEdited: 2026-03-28
+editHistory:
+  - date: 2026-03-28
+    changes: "Updated FR/NFR measurability, added User Journeys, and converted open questions into decision gates"
 documentCounts:
   briefCount: 0
   researchCount: 2
@@ -144,21 +152,59 @@ Primary use cases:
 - Optional runtime validation for critical responses.
 - Improve generated docs and release communication quality.
 
+## User Journeys
+
+### Journey 1: Backend Integrator Ships a Reliable Payment Flow
+
+- Actor: Backend Integrator Engineer
+- Trigger: Needs card + PSE + cash integrations with predictable SDK behavior.
+- Journey:
+  - Installs the official package and confirms available methods.
+  - Implements core flows (tokenization, customers, charge) using documented host/mode expectations.
+  - Diagnoses failures using typed errors and stable error metadata.
+- Expected outcome: Production integration succeeds without contract ambiguity.
+- Linked success criteria: SC1, SC2, SC3, SC6
+- Linked functional requirements: FR1, FR2, FR3, FR5, FR6, FR7, FR8
+
+### Journey 2: SDK Maintainer Delivers Semver-Safe Enhancements
+
+- Actor: Platform/SDK Maintainer
+- Trigger: Must ship hardening and new domains with low regression risk.
+- Journey:
+  - Applies release policy with semver impact and migration guidance.
+  - Adds/updates methods with deterministic tests and explicit endpoint mapping.
+  - Uses token lifecycle controls to improve performance while preserving compatibility options.
+- Expected outcome: Releases are predictable, testable, and backward-compatible by policy.
+- Linked success criteria: SC3, SC4, SC5, SC6
+- Linked functional requirements: FR4, FR9, FR10, FR11, FR15, FR19, FR20
+
+### Journey 3: Technical Decision Maker Approves Adoption Plan
+
+- Actor: CTO/Lead
+- Trigger: Needs confidence in roadmap risk, compliance posture, and rollout safety.
+- Journey:
+  - Reviews phased scope, semver impact, and explicit decision gates.
+  - Confirms fintech and reliability controls are represented in requirements.
+  - Approves balanced execution path with measurable outcomes.
+- Expected outcome: Adoption decision is made with clear risk and migration visibility.
+- Linked success criteria: SC3, SC5, SC6
+- Linked functional requirements: FR12, FR13, FR14, FR16, FR17, FR18
+
 ## Prioritized Functional Requirements
 
 ### Capability Area: Documentation and Product Contract
 
 - FR1: Developers can install the correct package name from official docs.
 - FR2: Developers can see only methods that exist in the current SDK version.
-- FR3: Developers can understand per-method host/mode expectations from docs.
+- FR3: Developers can reference a per-method host/mode table in official docs for 100% of public SDK methods.
 - FR4: Maintainers can publish release notes with semver impact and migration notes.
 
 ### Capability Area: Transport and Error Reliability
 
 - FR5: SDK requests can distinguish network/HTTP failures from API business failures.
-- FR6: SDK users can catch typed errors with actionable metadata.
+- FR6: SDK users can catch typed errors that include errorCode, errorType, and remediationHint fields.
 - FR7: SDK requests can handle non-JSON responses without silent crashes.
-- FR8: SDK users can choose compatibility mode for legacy error behavior when applicable.
+- FR8: SDK users can enable legacyErrorMode to preserve SDK v1.x error semantics during migration windows.
 
 ### Capability Area: Authentication Lifecycle
 
@@ -171,13 +217,13 @@ Primary use cases:
 - FR12: SDK users can create, update, and list collection links through dedicated methods.
 - FR13: SDK users can create and consult withdrawals through dedicated methods.
 - FR14: SDK users can create checkout sessions if selected for phase scope.
-- FR15: Each new method maps to documented endpoint, host, and payload mode.
+- FR15: Developers can see the endpoint, host, and payload mode for each new method in SDK docs and type definitions.
 
 ### Capability Area: Existing Surface Alignment
 
-- FR16: SDK and README agree on plans capabilities (including update decision).
-- FR17: SDK and README agree on customers list pagination support decision.
-- FR18: Cash provider messaging aligns with supported provider type union.
+- FR16: Developers can verify whether plans.update is supported in the current SDK version from both README and exported API surface.
+- FR17: Developers can verify whether customers.list pagination arguments are supported in the current SDK version from both README and method signature.
+- FR18: SDK users receive cash-provider error messages that match the CashProvider type union values.
 
 ### Capability Area: Developer Confidence and Testability
 
@@ -188,17 +234,17 @@ Primary use cases:
 
 ### Security
 
-- NFR1: No sensitive secrets (private keys, tokens, card data) are logged in normal or error paths.
-- NFR2: Error objects must redact or avoid raw secret exposure by default.
+- NFR1: Automated CI log scans must report 0 exposures of private keys, bearer tokens, and card data across normal and error-path test runs.
+- NFR2: All SDK-thrown errors must redact sensitive fields by policy (masking tokens, card numbers, and private keys) in message and metadata outputs.
 
 ### Reliability
 
 - NFR3: HTTP layer must return deterministic typed failures for non-2xx responses.
-- NFR4: Authentication retry/caching logic must not duplicate uncontrolled login bursts.
+- NFR4: Authentication retry/caching logic must enforce at most 1 concurrent login per credential set and no more than 2 bounded retries after authorization failure.
 
 ### Performance
 
-- NFR5: Repeated SDK operations should avoid per-request auth latency when token remains valid.
+- NFR5: With token cache enabled and valid token state, median auth overhead per request must remain below 50ms in a 20-request sequential benchmark.
 
 ### Compatibility
 
@@ -206,8 +252,8 @@ Primary use cases:
 
 ### Maintainability
 
-- NFR7: New resources follow existing Resource pattern and test conventions.
-- NFR8: Every new endpoint method includes test coverage and documentation linkage.
+- NFR7: 100% of new resources must extend Resource, include typed request/response contracts, and pass the resource-pattern checklist during review.
+- NFR8: Every new endpoint method must include at least one deterministic success-path test, one deterministic failure-path test, and README method-to-endpoint linkage.
 
 ## Risks, Dependencies, and Assumptions
 
@@ -371,13 +417,21 @@ Primary use cases:
 - Changing authentication flow semantics in a way that alters observable behavior.
 - Removing or renaming public methods/types.
 
-## Open Questions and Pending Decisions
+## Decision Gates and Pending Decisions
 
-- Q1: Should plans update be implemented now or removed from docs until supported?
-- Q2: Should customers list support pagination arguments in SDK surface?
-- Q3: Should 200 with success=false throw by default, or remain compatibility-first?
-- Q4: What is the official webhook signature verification contract and timeline?
-- Q5: Is checkout session in-scope for Phase 3 or deferred?
+| Gate | Decision                                 | Owner                      | Due Date   | Options                                                             | Recommendation                                         |
+| ---- | ---------------------------------------- | -------------------------- | ---------- | ------------------------------------------------------------------- | ------------------------------------------------------ |
+| DG1  | Plans update behavior (`plans.update`)   | SDK Maintainer             | 2026-04-04 | A) Implement in Phase 1, B) Document as unsupported                 | B in Phase 1, A in Phase 3 if parity budget allows     |
+| DG2  | Customers list pagination contract       | SDK Maintainer             | 2026-04-04 | A) Add optional args now, B) Document non-support                   | A with backward-compatible optional params             |
+| DG3  | Policy for HTTP 200 with `success=false` | Tech Lead + SDK Maintainer | 2026-04-06 | A) Throw by default, B) Compatibility-first return + opt-in throw   | B in Phase 2 with explicit opt-in flag                 |
+| DG4  | Webhook signature verification scope     | Security Lead + Tech Lead  | 2026-04-08 | A) Implement helper now, B) Defer until official contract confirmed | B until official algorithm contract is documented      |
+| DG5  | Checkout session scope in Phase 3        | Product + Tech Lead        | 2026-04-08 | A) Include in Phase 3, B) Defer to next cycle                       | A if links + withdrawals are on-track; otherwise defer |
+
+**Gate Exit Criteria:**
+
+- Each decision is recorded in release notes and linked to corresponding epic acceptance criteria.
+- Semver impact is classified before implementation starts.
+- Migration guidance is published for any behavior change affecting integrators.
 
 ## Explicit Assumptions and Pending Validations
 
