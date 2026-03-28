@@ -4,3 +4,4 @@ tests/testing.js
 package-lock.json
 *.tsbuildinfo
 bun.lock
+references/
