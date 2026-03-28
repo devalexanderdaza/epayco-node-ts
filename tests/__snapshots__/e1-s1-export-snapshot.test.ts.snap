@@ -1,0 +1,60 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`E1-S1: Export Surface Snapshot > should have deterministic, documented public surface 1`] = `
+{
+  "bank": [
+    "constructor",
+    "create",
+    "get",
+    "getBanks",
+  ],
+  "cash": [
+    "constructor",
+    "create",
+    "get",
+  ],
+  "charge": [
+    "constructor",
+    "create",
+    "get",
+  ],
+  "customers": [
+    "addDefaultCard",
+    "addNewToken",
+    "constructor",
+    "create",
+    "delete",
+    "get",
+    "list",
+    "update",
+  ],
+  "daviplata": [
+    "confirm",
+    "constructor",
+    "create",
+  ],
+  "plans": [
+    "constructor",
+    "create",
+    "delete",
+    "get",
+    "list",
+  ],
+  "safetypay": [
+    "constructor",
+    "create",
+  ],
+  "subscriptions": [
+    "cancel",
+    "charge",
+    "constructor",
+    "create",
+    "get",
+    "list",
+  ],
+  "token": [
+    "constructor",
+    "create",
+  ],
+}
+`;

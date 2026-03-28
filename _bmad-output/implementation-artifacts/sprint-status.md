@@ -40,6 +40,22 @@ The epayco-node-ts SDK is transitioning from a technically solid foundation to a
 
 ---
 
+## Current Sprint Status
+
+**Last Updated:** 2026-03-28 (Story E1-S1 Created)
+
+| Epic ID | Title                           | Status          | Progress      | Blockers                      |
+| ------- | ------------------------------- | --------------- | ------------- | ----------------------------- |
+| Epic 1  | Product Contract Alignment      | **in-progress** | 0/16 pts (0%) | None - First story created    |
+| Epic 2  | Deterministic Transport & Error | backlog         | 0/26 pts      | Awaits Epic 1 completion      |
+| Epic 3  | Authentication Lifecycle        | backlog         | 0/24 pts      | Awaits Epic 2 stabilization   |
+| Epic 4  | Fintech Compliance              | backlog         | 0/26 pts      | Awaits Epic 3 completion      |
+| Epic 5  | Developer Tool Experience       | backlog         | 0/26 pts      | Awaits Epic 3 completion      |
+| Epic 6  | Semver Governance               | backlog         | 0/18 pts      | Can parallelize with Epic 3   |
+| Epic 7  | API Parity Expansion            | backlog         | 0/26 pts      | Awaits Epic 2/3 stabilization |
+
+---
+
 ## Epic Sequencing and Rationale
 
 ### Sequencing Principles
@@ -69,12 +85,12 @@ The epayco-node-ts SDK is transitioning from a technically solid foundation to a
 **Total Story Points:** 16  
 **Goal:** Eliminate SDK-docs drift and establish single source of truth for current API surface.
 
-| Story ID | Title                                             | Points | Priority    | Status  |
-| -------- | ------------------------------------------------- | ------ | ----------- | ------- |
-| E1-S1    | Align package installation and API surface claims | 5      | ⭐⭐⭐ High | Backlog |
-| E1-S2    | Resolve plans.update contract                     | 3      | ⭐⭐ Medium | Backlog |
-| E1-S3    | Resolve customers.list pagination contract        | 3      | ⭐⭐ Medium | Backlog |
-| E1-S4    | Align error catalog with CashProvider             | 5      | ⭐⭐⭐ High | Backlog |
+| Story ID | Title                                             | Points | Priority    | Status                      |
+| -------- | ------------------------------------------------- | ------ | ----------- | --------------------------- |
+| E1-S1    | Align package installation and API surface claims | 5      | ⭐⭐⭐ High | **created** ← Ready for Dev |
+| E1-S2    | Resolve plans.update contract                     | 3      | ⭐⭐ Medium | Backlog                     |
+| E1-S3    | Resolve customers.list pagination contract        | 3      | ⭐⭐ Medium | Backlog                     |
+| E1-S4    | Align error catalog with CashProvider             | 5      | ⭐⭐⭐ High | Backlog                     |
 
 **Sprint Goal:** README, exported API surface, error catalog, and type signatures are aligned and validated.
 
