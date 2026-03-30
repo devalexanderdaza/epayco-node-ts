@@ -1,49 +1,80 @@
-# Project Overview — epayco-sdk-node-ts
+# Project Overview: epayco-sdk-node-ts
 
-## Purpose
+## Executive Summary
 
-**epayco-sdk-node-ts** (package name `epayco-sdk-node-ts`) is a **Node.js client library** for the [Epayco](https://www.epayco.co) payment platform. It wraps HTTP calls to Epayco’s APIs so applications can tokenize cards, manage customers and subscriptions, process charges, and use channels such as PSE, cash networks, Daviplata, and Safetypay.
+`epayco-sdk-node-ts` is a TypeScript SDK for Node.js that wraps ePayco payment services behind a single typed client (`Epayco`).
+The codebase is a single-package monolith (library type) with strict TypeScript settings, dual module output (ESM + CJS), and a test-first workflow using Vitest.
 
-Remote API base URLs are configurable via environment variables (see `src/constants.ts`); defaults point to Epayco production hosts.
+The architecture follows a facade + resource pattern:
 
-## Executive summary
+- `Epayco` is the public facade.
+- Resource classes (`Token`, `Customers`, `Plans`, etc.) encapsulate domain-specific operations.
+- `Resource.request()` centralizes authentication, payload shaping/encryption, and HTTP dispatch.
 
-| Aspect               | Detail                                         |
-| -------------------- | ---------------------------------------------- |
-| **Repository type**  | Monolith (single package)                      |
-| **Primary language** | TypeScript                                     |
-| **Runtime**          | Node.js ≥ 18 (uses global `fetch`)             |
-| **Distribution**     | npm package; published `files`: `dist` only    |
-| **Module formats**   | ESM and CommonJS (`exports` in `package.json`) |
-| **Testing**          | Vitest (`tests/**/*.test.ts`)                  |
-| **Lint/format**      | Biome                                          |
+## Project Classification
 
-## Tech stack summary
+- Repository Type: Monolith
+- Project Type: Library SDK
+- Primary Language: TypeScript
+- Runtime Baseline: Node.js >= 18
+- Packaging: npm package (`type: module`) with CJS + ESM exports
 
-- **Build:** `tsup` — dual CJS/ESM, declarations, source maps, path alias `@` → `src`
-- **HTTP:** Native `fetch` (`src/http.ts`); Bearer token after login
-- **Crypto:** AES-style helpers for encrypted request bodies (`src/crypto.ts`, used by `Resource`)
-- **i18n for errors:** JSON maps in `src/data/errors.json`; language from client config (`ES` / `EN`)
+## Primary Use Cases
 
-## Architecture type
+- Tokenization and card operations
+- Customer management
+- Recurring plans and subscriptions
+- Card charges
+- PSE and cash collection flows
+- Alternative payment methods (Daviplata, Safetypay)
 
-**Layered SDK:** a thin **facade** (`Epayco` in `src/index.ts`) exposes **resource** objects (`Token`, `Customers`, `Charge`, …). Each resource extends `Resource`, which centralizes authentication, URL selection (standard vs secure vs Apify), payload encryption/mapping, and `sendRequest`.
+## Technology Stack
 
-## Documentation map
+| Category | Technology | Version / Mode | Why It Matters |
+| --- | --- | --- | --- |
+| Language | TypeScript | ^5.9.3 (strict) | Strong typing and safer SDK surface |
+| Runtime | Node.js | >=18 | Required for native fetch and modern JS APIs |
+| Build | tsup | ^8.5.1 | Produces ESM + CJS + declaration files |
+| Testing | Vitest | ^4.0.18 | Fast unit tests with fetch mocking |
+| Lint/Format | Biome | ^2.4.5 | Unified linting/formatting rules |
+| Crypto | node:crypto | Native | AES compatibility for legacy encrypted flows |
 
-| Document                                             | Description                            |
-| ---------------------------------------------------- | -------------------------------------- |
-| [index.md](./index.md)                               | Master index and links                 |
-| [architecture.md](./architecture.md)                 | Structure, data flow, extension points |
-| [source-tree-analysis.md](./source-tree-analysis.md) | Directory layout                       |
-| [component-inventory.md](./component-inventory.md)   | Public SDK modules and methods         |
-| [development-guide.md](./development-guide.md)       | Setup, scripts, testing                |
+## Architecture Pattern
 
-## User-facing entry
+- Pattern: Facade + Domain Resources + Shared Request Pipeline
+- Entry Point: `src/index.ts`
+- Shared Core: `src/resources/resource.ts`, `src/http.ts`, `src/crypto.ts`, `src/keylang.ts`
 
-- **Factory:** `createEpayco(options)` (also default export)
-- **Class:** `Epayco` — holds credentials and resource instances
+## Public SDK Surface
 
-## Known documentation drift
+The `Epayco` client exposes these resources:
 
-The root **README.md** includes examples for `epayco.plans.update(...)`. The current TypeScript implementation in `src/resources/plans.ts` exposes `create`, `get`, `list`, and `delete` only—no `update` method. Treat README as partially legacy until aligned with code.
+- `token`
+- `customers`
+- `plans`
+- `subscriptions`
+- `bank`
+- `cash`
+- `charge`
+- `safetypay`
+- `daviplata`
+
+See `./component-inventory.md` and `./api-contracts.md` for details.
+
+## Key Design Decisions
+
+- Unified resource API around `request(method, url, data, flags...)` to avoid duplicated transport logic.
+- Three base URLs supported (`api.secure.payco.co`, `secure.payco.co`, `apify.epayco.co`) selected by request mode.
+- Key translation (`keylang`) is used to adapt SDK keys to provider-specific payload keys.
+- Legacy-compatible AES transformation is preserved for encrypted request flows.
+
+## Test Posture
+
+- Unit tests cover client initialization, resource behavior, URL composition, and selected contract consistency.
+- Tests mock `globalThis.fetch`; no live integration test suite is included by default.
+
+## Known Constraints
+
+- Authentication is currently requested per operation (`authenticate` in each request path).
+- HTTP responses are parsed as JSON directly; status normalization is limited.
+- README examples include some legacy expectations that differ from the typed SDK surface.

@@ -1,79 +1,62 @@
-# Component Inventory — Public SDK Surface
+# Component Inventory
 
-For this library, “components” are **exported modules and classes** that consumers instantiate or call. The default export is `createEpayco` (same as named export).
+## Component Taxonomy
 
-## Core exports (`src/index.ts`)
+This SDK is organized by runtime role instead of UI components.
 
-| Export                                             | Kind     | Description                                |
-| -------------------------------------------------- | -------- | ------------------------------------------ |
-| `createEpayco`                                     | function | Factory: `createEpayco(options) => Epayco` |
-| `Epayco`                                           | class    | Facade holding all resources               |
-| `EpaycoError`                                      | class    | Error with localized message from code     |
-| `EpaycoOptions`, `EpaycoConfig`, option interfaces | types    | Re-exported from `@/types`                 |
+### Facade Components
 
-## `Epayco` instance properties
+| Component | File | Responsibility |
+| --- | --- | --- |
+| `Epayco` | `src/index.ts` | Main public client that composes all resources |
+| `createEpayco` | `src/index.ts` | Factory helper for client construction |
 
-| Property        | Class           | Role                                  |
-| --------------- | --------------- | ------------------------------------- |
-| `token`         | `Token`         | Card tokenization                     |
-| `customers`     | `Customers`     | Customer CRUD-style operations        |
-| `plans`         | `Plans`         | Recurring plans                       |
-| `subscriptions` | `Subscriptions` | Subscriptions lifecycle + charge      |
-| `bank`          | `Bank`          | PSE banks list and transactions       |
-| `cash`          | `Cash`          | Cash network payments (provider enum) |
-| `charge`        | `Charge`        | One-off card charges                  |
-| `safetypay`     | `Safetypay`     | Safetypay create                      |
-| `daviplata`     | `Daviplata`     | Daviplata create + confirm            |
+### Core Infrastructure Components
 
-## Resource methods (by file)
+| Component | File | Responsibility |
+| --- | --- | --- |
+| `Resource` | `src/resources/resource.ts` | Shared request orchestrator |
+| `authenticate` | `src/http.ts` | Login flow for legacy/Apify endpoints |
+| `sendRequest` | `src/http.ts` | Generic HTTP JSON request sender |
+| `getIp` | `src/http.ts` | IP auto-resolution helper |
+| `encrypt` / `encryptHex` | `src/crypto.ts` | Legacy-compatible payload encryption helpers |
+| `encodeBasicAuth` | `src/crypto.ts` | Basic authorization token helper |
+| `langkey` / `langkeyApify` | `src/keylang.ts` | Payload key mapping adapters |
+| `EpaycoError` | `src/errors.ts` | Localized SDK error class |
 
-### Token (`token.ts`)
+### Domain Resource Components
 
-- `create(options: TokenCreateOptions)`
+| Resource | File | Main Methods |
+| --- | --- | --- |
+| `Token` | `src/resources/token.ts` | `create` |
+| `Customers` | `src/resources/customers.ts` | `create`, `get`, `list`, `update`, `delete`, `addDefaultCard`, `addNewToken` |
+| `Plans` | `src/resources/plans.ts` | `create`, `get`, `list`, `delete` |
+| `Subscriptions` | `src/resources/subscriptions.ts` | `create`, `get`, `list`, `cancel`, `charge` |
+| `Bank` | `src/resources/bank.ts` | `create`, `get`, `getBanks` |
+| `Cash` | `src/resources/cash.ts` | `create`, `get` |
+| `Charge` | `src/resources/charge.ts` | `create`, `get` |
+| `Safetypay` | `src/resources/safetypay.ts` | `create` |
+| `Daviplata` | `src/resources/daviplata.ts` | `create`, `confirm` |
 
-### Customers (`customers.ts`)
+### Static Data Components
 
-- `create`, `get`, `list`, `update`, `delete`, `addDefaultCard`, `addNewToken`
+| Data Asset | File | Purpose |
+| --- | --- | --- |
+| Error dictionary | `src/data/errors.json` | Error code -> localized message mapping |
+| Generic keylang map | `src/data/keylang.json` | Legacy payload key translation |
+| Apify keylang map | `src/data/keylang_apify.json` | Apify payload key translation |
 
-### Plans (`plans.ts`)
+## Reusability Notes
 
-- `create`, `get`, `list`, `delete`  
-  _(No `update` in current source—README may still mention it.)_
+- Highly reusable:
+  - `Resource.request()` orchestration pipeline
+  - `http.ts` helpers
+  - `crypto.ts` compatibility helpers
+- Domain-specific:
+  - Individual resource endpoint methods
 
-### Subscriptions (`subscriptions.ts`)
+## Gaps and Alignment Notes
 
-- `create`, `get`, `list`, `cancel`, `charge`
-
-### Bank (`bank.ts`)
-
-- `create`, `get`, `getBanks`
-
-### Cash (`cash.ts`)
-
-- `create(type: CashProvider, options)`, `get`
-
-### Charge (`charge.ts`)
-
-- `create`, `get`
-
-### Daviplata (`daviplata.ts`)
-
-- `create`, `confirm`
-
-### Safetypay (`safetypay.ts`)
-
-- `create`
-
-## Internal building blocks (not typically imported by apps)
-
-| Module     | Responsibility                          |
-| ---------- | --------------------------------------- |
-| `Resource` | Auth + `request()` + `setData()`        |
-| `http`     | Login, generic JSON POST/GET, IP helper |
-| `crypto`   | Encrypt helpers for payload path        |
-| `keylang`  | Field name mapping for Apify / cash     |
-
-## JSON data assets
-
-- `src/data/errors.json` — Epayco error codes × language
-- `src/data/keylang*.json` — Payload key translation for encryption/Apify flows
+- `Plans` does not currently expose `update`.
+- Customer list method currently has no typed pagination parameters.
+- Split-like capabilities appear as payload fields in payment operations rather than a dedicated resource class.

@@ -2,56 +2,75 @@
 
 ## Prerequisites
 
-- **Node.js** ≥ 18 (see `package.json` `engines`)
-- **pnpm** (used in `prepublishOnly`; npm/yarn can work if you adjust commands)
+- Node.js >= 18
+- npm or pnpm
 
-## Install
+## Installation
 
 ```bash
-pnpm install
+npm install
 ```
 
-## Environment variables (optional)
+## Local Quality Commands
 
-Defined in `src/constants.ts` with defaults for Epayco hosts:
+```bash
+npm run typecheck
+npm test
+npm run build
+```
 
-| Variable         | Purpose                                                             |
-| ---------------- | ------------------------------------------------------------------- |
-| `BASE_URL_SDK`   | Primary API base (default `https://api.secure.payco.co`)            |
-| `SECURE_URL_SDK` | Secure host for encrypted flows (default `https://secure.payco.co`) |
-| `BASE_URL_APIFY` | Apify host (default `https://apify.epayco.co`)                      |
+Optional formatting/linting:
 
-Use these for staging or testing against non-production endpoints.
+```bash
+npm run lint
+npm run lint:fix
+npm run format
+```
 
-## Scripts
+## Build Output
 
-| Command           | Description                                |
-| ----------------- | ------------------------------------------ |
-| `pnpm build`      | `tsup` — outputs `dist/` (CJS, ESM, types) |
-| `pnpm test`       | `vitest run`                               |
-| `pnpm test:watch` | Vitest watch mode                          |
-| `pnpm lint`       | `biome check .`                            |
-| `pnpm lint:fix`   | Biome with `--write --unsafe`              |
-| `pnpm format`     | `biome format --write .`                   |
-| `pnpm typecheck`  | `tsc --noEmit`                             |
+- Tool: `tsup`
+- Entry: `src/index.ts`
+- Outputs:
+  - `dist/index.js` (ESM)
+  - `dist/index.cjs` (CommonJS)
+  - declaration files (`.d.ts`)
 
-## Project conventions
+## Testing Approach
 
-- **Path alias:** `@/` maps to `src/` (see `tsconfig.json` and `vitest.config.ts`).
-- **Package type:** `"type": "module"` — ESM-first; CJS via `require` entry in `exports`.
-- **Published files:** only `dist/` is included in the npm package (`files` field).
+- Framework: Vitest
+- Environment: Node
+- Test pattern: `tests/**/*.test.ts`
+- Main strategy:
+  - Mock `fetch`
+  - Assert URL composition and request behavior
+  - Validate facade and resource contracts
 
-## Testing
+## Project Conventions
 
-- Tests: `tests/**/*.test.ts`
-- Setup: `tests/setup.ts` if present for shared mocks
-- Run all tests: `pnpm test`  
-  _(Scan run: 10 files, 36 tests passed.)_
+- TypeScript strict mode is enforced.
+- Path alias `@/*` resolves to `src/*`.
+- Runtime HTTP calls should go through the shared request flow in `Resource`.
+- New endpoint integrations should be added as resource methods under `src/resources/`.
 
-## CI/CD
+## Adding a New Resource Method
 
-No `.github/workflows` directory was present at documentation time. Add workflows locally if you need automated test/lint on push or publish.
+1. Add or update method in the proper file under `src/resources/`.
+2. Reuse `this.request(...)` with correct mode flags.
+3. Extend input interfaces in `src/types.ts` if new payload contracts are needed.
+4. Add or update tests in `tests/`.
+5. Update README examples and this documentation set if public behavior changes.
 
-## Contributing
+## Environment Variables
 
-There is no `CONTRIBUTING.md` in the repository root. For pull requests, follow Biome rules and ensure `pnpm test` and `pnpm typecheck` pass before submitting.
+These variables can override default host values:
+
+- `BASE_URL_SDK`
+- `SECURE_URL_SDK`
+- `BASE_URL_APIFY`
+
+## Known Operational Caveats
+
+- Authentication currently occurs per request.
+- Error normalization for non-JSON/non-2xx responses is limited.
+- Automatic IP discovery depends on an external service (`api.ipify.org`).

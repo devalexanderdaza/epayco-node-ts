@@ -1,23 +1,47 @@
-# Epayco
+# epayco-sdk-node-ts
 
-Node wrapper for Epayco API
-
-## Description
-
-API to interact with Epayco <https://api.epayco.co>
+TypeScript SDK for ePayco APIs in Node.js.
 
 ## Installation
 
-As usual, you can install it using npm.
-
-```
-$ npm i epayco-sdk-node-ts
+```bash
+npm i epayco-sdk-node-ts
 ```
 
-## Usage
+## Requirements
 
-```javascript
-var epayco = require("epayco-sdk-node")({
+- Node.js 18 or higher
+
+## Quick Start
+
+### ESM / TypeScript
+
+```ts
+import { createEpayco } from "epayco-sdk-node-ts";
+
+const epayco = createEpayco({
+  apiKey: "PUBLIC_KEY",
+  privateKey: "PRIVATE_KEY",
+  lang: "ES",
+  test: true,
+});
+
+const token = await epayco.token.create({
+  "card[number]": "4575623182290326",
+  "card[exp_year]": "2025",
+  "card[exp_month]": "12",
+  "card[cvc]": "123",
+});
+
+console.log(token);
+```
+
+### CommonJS
+
+```js
+const { createEpayco } = require("epayco-sdk-node-ts");
+
+const epayco = createEpayco({
   apiKey: "PUBLIC_KEY",
   privateKey: "PRIVATE_KEY",
   lang: "ES",
@@ -25,334 +49,130 @@ var epayco = require("epayco-sdk-node")({
 });
 ```
 
-### Create Token
+## Error Handling
 
-```javascript
-var credit_info = {
+```ts
+import { EpaycoError } from "epayco-sdk-node-ts";
+
+try {
+  await epayco.token.create({
+    "card[number]": "4575623182290326",
+    "card[exp_year]": "2025",
+    "card[exp_month]": "12",
+    "card[cvc]": "123",
+  });
+} catch (error) {
+  if (error instanceof EpaycoError) {
+    console.error("SDK validation error:", error.message);
+  } else {
+    console.error("Unexpected error:", error);
+  }
+}
+```
+
+## API Surface
+
+### Token
+
+```js
+epayco.token.create({
   "card[number]": "4575623182290326",
   "card[exp_year]": "2025",
   "card[exp_month]": "12",
   "card[cvc]": "123",
-  hasCvv: true, //hasCvv: validar codigo de seguridad en la transacción
-};
-epayco.token
-  .create(credit_info)
-  .then(function (token) {
-    console.log(token);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+});
 ```
 
 ### Customers
 
-#### Create
-
-```javascript
-var customer_info = {
-  token_card: "toke_id",
+```js
+epayco.customers.create({
+  token_card: "token_id",
   name: "Joe",
-  last_name: "Doe",
-  email: "joe@payco.co",
-  default: true,
-  //Optional parameters: These parameters are important when validating the credit card transaction
-  city: "Bogota",
-  address: "Cr 4 # 55 36",
+  email: "joe@example.com",
   phone: "3005234321",
-  cell_phone: "3010000001",
-};
-epayco.customers
-  .create(customer_info)
-  .then(function (customer) {
-    console.log(customer);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
+  default: true,
+});
 
-#### Retrieve
+epayco.customers.get("id_customer");
+epayco.customers.list();
 
-```javascript
-epayco.customers
-  .get("id_customer")
-  .then(function (customer) {
-    console.log(customer);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### List
-
-```javascript
-epayco.customers
-  .list()
-  .then(function (customers) {
-    console.log(customers);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Update
-
-```javascript
-var update_customer_info = {
+epayco.customers.update("id_customer", {
   name: "Alex",
-};
-epayco.customers
-  .update("id_customer", update_customer_info)
-  .then(function (customer) {
-    console.log(customer);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
+});
 
-#### Delete Token
-
-```javascript
-var delete_customer_info = {
+epayco.customers.delete({
   franchise: "visa",
   mask: "457562******0326",
   customer_id: "id_customer",
-};
-epayco.customers
-  .delete(delete_customer_info)
-  .then(function (customer) {
-    console.log(customer);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
+});
 
-#### Add new token default to card existed
-
-```javascript
-var addDefaultCard_customer = {
+epayco.customers.addDefaultCard({
   franchise: "visa",
-  token: "**********zL4gFB",
+  token: "new_token",
   mask: "457562******0326",
   customer_id: "id_customer",
-};
-epayco.customers
-  .addDefaultCard(addDefaultCard_customer)
-  .then(function (customer) {
-    console.log(customer);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
+});
 
-#### add new token to customer existed
-
-```javascript
-var add_customer_info = {
-  token_card: "FevpWP4fwB4v6NMG2",
+epayco.customers.addNewToken({
+  token_card: "token_id",
   customer_id: "id_customer",
-};
-epayco.customers
-  .addNewToken(add_customer_info)
-  .then(function (customer) {
-    console.log(customer);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+});
 ```
 
 ### Plans
 
-#### Create
-
-```javascript
-var plan_info = {
-  id_plan: "coursereact",
-  name: "Course react js",
-  description: "Course react and redux",
+```js
+epayco.plans.create({
+  id_plan: "plan_id",
+  name: "Plan Name",
+  description: "Plan description",
   amount: 30000,
-  currency: "cop",
+  currency: "COP",
   interval: "month",
   interval_count: 1,
-  trial_days: 30,
-  iva: 5700,
-  ico: 0,
-  planLink: "https://ejemplo.com/plan",
-  greetMessage: "Gracias por preferirnos",
-  linkExpirationDate: "2025-03-11",
-  subscriptionLimit: 10,
-  imgUrl: "https://ejemplo.com/imagen",
-  discountValue: 5000,
-  discountPercentage: 19,
-  transactionalLimit: 5,
-  additionalChargePercentage: 0.0,
-  firstPaymentAdditionalCost: 45700,
-};
-epayco.plans
-  .create(plan_info)
-  .then(function (plan) {
-    console.log(plan);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+  trial_days: 0,
+});
+
+epayco.plans.get("plan_id");
+epayco.plans.list();
+epayco.plans.delete("plan_id");
 ```
 
-#### Retrieve
+Note:
 
-```javascript
-epayco.plans
-  .get("id_plan")
-  .then(function (plan) {
-    console.log(plan);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### List
-
-```javascript
-epayco.plans
-  .list()
-  .then(function (plans) {
-    console.log(plans);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Remove
-
-```javascript
-epayco.plans
-  .delete("id_plan")
-  .then(function (plan) {
-    console.log(plan);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Unsupported operations
-
-- `plans.update` is not supported in the current SDK cycle (PD-1 decision).
-- Semver impact: patch (documentation clarification only; method never existed).
+- plans.update is not supported by the current SDK API.
 
 ### Subscriptions
 
-#### Create
-
-```javascript
-var subscription_info = {
-  id_plan: "-id_plan",
-  customer: "id_customer",
-  token_card: "id_token",
+```js
+epayco.subscriptions.create({
+  id_plan: "plan_id",
+  customer: "customer_id",
+  token_card: "token_id",
   doc_type: "CC",
   doc_number: "5234567",
-  //Optional parameter: if these parameter it's not send, system get ePayco dashboard's url_confirmation
-  url_confirmation: "https://ejemplo.com/confirmacion",
-  method_confirmation: "POST",
-};
-epayco.subscriptions
-  .create(subscription_info)
-  .then(function (subscription) {
-    console.log(subscription);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
+});
 
-#### Retrieve
+epayco.subscriptions.get("id_subscription");
+epayco.subscriptions.list();
+epayco.subscriptions.cancel("id_subscription");
 
-```javascript
-epayco.subscriptions
-  .get("id_subscription")
-  .then(function (subscription) {
-    console.log(subscription);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### List
-
-```javascript
-epayco.subscriptions
-  .list()
-  .then(function (subscriptions) {
-    console.log(subscriptions);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Cancel
-
-```javascript
-epayco.subscriptions
-  .cancel("id_subscription")
-  .then(function (subscription) {
-    console.log(subscription);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Pay Subscription
-
-```javascript
-var subscription_info = {
-  id_plan: "-id_plan",
-  customer: "id_customer",
-  token_card: "id_token",
+epayco.subscriptions.charge({
+  id_plan: "plan_id",
+  customer: "customer_id",
+  token_card: "token_id",
   doc_type: "CC",
   doc_number: "5234567",
-  ip: "190.000.000.000" /*This is the client's IP, it is required */,
-};
-epayco.subscriptions
-  .charge(subscription_info)
-  .then(function (subscription) {
-    console.log(subscription);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+});
 ```
 
-### PSE
+### Bank (PSE)
 
-#### Listar bancos
+```js
+epayco.bank.getBanks();
 
-```javascript
-epayco.bank
-  .getBanks()
-  .then(function (bank) {
-    console.log(bank);
-  })
-  .catch(function (err) {
-    console.log("err:" + err);
-  });
-```
-
-#### Create
-
-```javascript
-var pse_info = {
+epayco.bank.create({
   bank: "1022",
   invoice: "1472050778",
   description: "pay test",
@@ -363,99 +183,32 @@ var pse_info = {
   type_person: "0",
   doc_type: "CC",
   doc_number: "10358519",
-  name: "testing",
+  name: "Testing",
   last_name: "PAYCO",
   email: "no-responder@payco.co",
   country: "CO",
   cell_phone: "3010000001",
-  ip: "190.000.000.000" /*This is the client's IP, it is required */,
-  url_response: "https://ejemplo.com/respuesta.html",
-  url_confirmation: "https://ejemplo.com/confirmacion",
-  metodoconfirmacion: "GET",
+  url_response: "https://example.com/response",
+  url_confirmation: "https://example.com/confirmation",
+  method_confirmation: "GET",
+});
 
-  //Los parámetros extras deben ser enviados tipo string, si se envía tipo array generara error.
-  extra1: "",
-  extra2: "",
-  extra3: "",
-  extra4: "",
-  extra5: "",
-  extra6: "",
-};
-epayco.bank
-  .create(pse_info)
-  .then(function (bank) {
-    console.log(bank);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Retrieve
-
-```javascript
-epayco.bank
-  .get("ticketId")
-  .then(function (bank) {
-    console.log(bank);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Split Payments
-
-Previous requirements:
-https://docs.epayco.co/tools/split-payment
-
-#### Split payment
-
-use the following attributes in case you need to do a dispersion
-
-```javascript
-var split_payment_info = {
-  //Other customary parameters...
-  splitpayment: "true",
-  split_app_id: "P_CUST_ID_CLIENTE APPLICATION",
-  split_merchant_id: "P_CUST_ID_CLIENTE COMMERCE",
-  split_type: "02",
-  split_primary_receiver: "P_CUST_ID_CLIENTE APPLICATION",
-  split_primary_receiver_fee: "0",
-  split_rule: "multiple", // si se envía este parámetro split_receivers se vuelve obligatorio
-  split_receivers: JSON.stringify([
-    {
-      id: "P_CUST_ID_CLIENTE 1ST RECEIVER",
-      total: "58000",
-      iva: "8000",
-      base_iva: "50000",
-      fee: "10",
-    },
-    {
-      id: "P_CUST_ID_CLIENTE 2ND RECEIVER",
-      total: "58000",
-      iva: "8000",
-      base_iva: "50000",
-      fee: "10",
-    },
-  ]), // Campo obligatorio sí se envía el split_rule
-};
-epayco.bank
-  .create(split_payment_info)
-  .then(function (charge) {
-    console.log(charge);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+epayco.bank.get("ticket_id");
 ```
 
 ### Cash
 
-#### Create
+Supported providers:
 
-```javascript
-var cash_info = {
+- efecty
+- baloto
+- gana
+- redservi
+- puntored
+- sured
+
+```js
+epayco.cash.create("efecty", {
   invoice: "1472050778",
   description: "pay test",
   value: "20000",
@@ -465,133 +218,23 @@ var cash_info = {
   type_person: "0",
   doc_type: "CC",
   doc_number: "10358519",
-  name: "testing",
+  name: "Testing",
   last_name: "PAYCO",
-  email: "test@mailinator.com",
+  email: "test@example.com",
   cell_phone: "3010000001",
-  end_date: "2020-12-05",
-  ip: "190.000.000.000" /*This is the client's IP, it is required */,
-  url_response: "https://ejemplo.com/respuesta.html",
-  url_confirmation: "https://ejemplo.com/confirmacion",
-  metodoconfirmacion: "GET",
+  end_date: "2026-12-05",
+  url_response: "https://example.com/response",
+  url_confirmation: "https://example.com/confirmation",
+  method_confirmation: "GET",
+});
 
-  //Los parámetros extras deben ser enviados tipo string, si se envía tipo array generara error.
-
-  extra1: "",
-  extra2: "",
-  extra3: "",
-  extra4: "",
-  extra5: "",
-  extra6: "",
-};
-epayco.cash
-  .create("efecty", cash_info)
-  .then(function (cash) {
-    console.log(cash);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+epayco.cash.get("transaction_id");
 ```
 
-#### Retrieve
+### Charge
 
-```javascript
-epayco.cash
-  .get("transaction_id")
-  .then(function (cash) {
-    console.log(cash);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### list
-
-```javascript
-epayco.cash.create("efecty", cash_info);
-epayco.cash.create("gana", cash_info);
-epayco.cash.create("baloto", cash_info); //expiration date can not be longer than 30 days
-epayco.cash.create("redservi", cash_info); //expiration date can not be longer than 30 days
-epayco.cash.create("puntored", cash_info); //expiration date can not be longer than 30 days
-epayco.cash.create("sured", cash_info); //expiration date can not be longer than 30 days
-```
-
-#### Split Payments
-
-Previous requirements:
-https://docs.epayco.co/tools/split-payment
-
-#### Split 1-1
-
-```javascript
-var split_cash_info = {
-  //Other customary parameters...
-  splitpayment: "true",
-  split_app_id: "P_CUST_ID_CLIENTE APPLICATION",
-  split_merchant_id: "P_CUST_ID_CLIENTE COMMERCE",
-  split_type: "02",
-  split_primary_receiver: "P_CUST_ID_CLIENTE APPLICATION",
-  split_primary_receiver_fee: "10",
-};
-epayco.cash
-  .create("efecty", split_cash_info)
-  .then(function (cash) {
-    console.log(cash);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Split Multiple:
-
-use the following attributes in case you need to do a dispersion with multiple providers
-
-```javascript
-var split_payment_info = {
-  //Other customary parameters...
-  splitpayment: "true",
-  split_app_id: "P_CUST_ID_CLIENTE APPLICATION",
-  split_merchant_id: "P_CUST_ID_CLIENTE COMMERCE",
-  split_type: "02",
-  split_primary_receiver: "P_CUST_ID_CLIENTE APPLICATION",
-  split_primary_receiver_fee: "0",
-  split_rule: "multiple", // si se envía este campo el campo split_receivers sería obligatorio
-  split_receivers: JSON.stringify([
-    {
-      id: "P_CUST_ID_CLIENTE 1ST RECEIVER",
-      total: "58000",
-      iva: "8000",
-      base_iva: "50000",
-      fee: "10",
-    },
-    {
-      id: "P_CUST_ID_CLIENTE 2ND RECEIVER",
-      total: "58000",
-      iva: "8000",
-      base_iva: "50000",
-      fee: "10",
-    },
-  ]), // Campo obligatorio sí se envía el campo split_rule
-};
-epayco.cash
-  .create("efecty", split_cash_info)
-  .then(function (cash) {
-    console.log(cash);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-### Payment
-
-#### Create
-
-```javascript
-var payment_info = {
+```js
+epayco.charge.create({
   token_card: "token_id",
   customer_id: "customer_id",
   doc_type: "CC",
@@ -599,10 +242,6 @@ var payment_info = {
   name: "John",
   last_name: "Doe",
   email: "example@email.com",
-  city: "Bogota",
-  address: "Cr 4 # 55 36",
-  phone: "3005234321",
-  cell_phone: "3010000001",
   bill: "OR-1234",
   description: "Test Payment",
   value: "116000",
@@ -610,180 +249,111 @@ var payment_info = {
   tax_base: "100000",
   currency: "COP",
   dues: "12",
-  ip: "190.000.000.000" /*This is the client's IP, it is required */,
-  url_response: "https://ejemplo.com/respuesta.html",
-  url_confirmation: "https://ejemplo.com/confirmacion",
-  method_confirmation: "GET",
+});
 
-  //Los parámetros extras deben ser enviados tipo string, si se envía tipo array generara error.
-
-  use_default_card_customer: true /*if the user wants to be charged with the card that the customer currently has as default = true*/,
-
-  extras: {
-    extra1: "",
-    extra2: "",
-    extra3: "",
-    extra4: "",
-    extra5: "",
-    extra6: "",
-  },
-};
-epayco.charge
-  .create(payment_info)
-  .then(function (charge) {
-    console.log(charge);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Retrieve
-
-```javascript
-epayco.charge
-  .get("transaction_id")
-  .then(function (charge) {
-    console.log(charge);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
-
-#### Split Payments
-
-Previous requirements:
-https://docs.epayco.co/tools/split-payment
-
-#### Split payment
-
-use the following attributes in case you need to do a dispersion with one or multiple providers
-
-```javascript
-var split_payment_info = {
-  //Other customary parameters...
-  splitpayment: "true",
-  split_app_id: "P_CUST_ID_CLIENTE APPLICATION",
-  split_merchant_id: "P_CUST_ID_CLIENTE COMMERCE",
-  split_type: "02",
-  split_primary_receiver: "P_CUST_ID_CLIENTE APPLICATION",
-  split_primary_receiver_fee: "0",
-  split_rule: "multiple", // si se envía este campo el split_receivers se vuelve un campo obligatorio
-  split_receivers: [
-    {
-      id: "P_CUST_ID_CLIENTE 1ST RECEIVER",
-      total: "58000",
-      iva: "8000",
-      base_iva: "50000",
-      fee: "10",
-    },
-    {
-      id: "P_CUST_ID_CLIENTE 2ND RECEIVER",
-      total: "58000",
-      iva: "8000",
-      base_iva: "50000",
-      fee: "10",
-    },
-  ], // Campo obligatorio sí se envía split_rule
-};
-epayco.charge
-  .create(split_payment_info)
-  .then(function (charge) {
-    console.log(charge);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+epayco.charge.get("transaction_id");
 ```
 
 ### Daviplata
 
-### Create
-
-```javascript
-var body = {
+```js
+epayco.daviplata.create({
   doc_type: "CC",
-  document: "1053814580414720",
+  doc_number: "1053814580",
   name: "Testing",
   last_name: "PAYCO",
-  email: "exmaple@epayco.co",
+  email: "example@epayco.co",
   ind_country: "CO",
-  phone: "314853222200033",
+  phone: "3003003000",
   country: "CO",
-  city: "bogota",
-  address: "Calle de prueba",
-  ip: "189.176.0.1",
+  city: "Bogota",
+  address: "Calle 123",
+  ip: "190.0.0.1",
   currency: "COP",
-  description: "ejemplo de transaccion con daviplata",
+  invoice: "INV-123",
+  description: "Daviplata payment",
   value: "100",
   tax: "0",
   tax_base: "0",
-  method_confirmation: "",
-};
-epayco.daviplata
-  .create(body)
-  .then(function (daviplata) {
-    console.log(daviplata);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
-```
+  ico: "0",
+  test: "TRUE",
+  url_response: "https://example.com/response",
+  url_confirmation: "https://example.com/confirmation",
+  method_confirmation: "POST",
+});
 
-### Confirm
-
-```javascript
-epayco.daviplata
-  .confirm({
-    ref_payco: "45508846", // It is obtained from the create response
-    id_session_token: "45081749", // It is obtained from the create response
-    otp: "2580",
-  })
-  .then(function (daviplata) {
-    console.log(daviplata);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+epayco.daviplata.confirm({
+  ref_payco: "45508846",
+  id_session_token: "45081749",
+  otp: "2580",
+});
 ```
 
 ### Safetypay
 
-## Create
-
-```javascript
-var body = {
+```js
+epayco.safetypay.create({
   cash: "1",
-  end_date: "2021-08-05",
+  end_date: "2026-08-05",
   doc_type: "CC",
-  document: "123456789",
-  name: "Jhon",
-  last_name: "doe",
-  email: "jhon.doe@yopmail.com",
+  doc_number: "123456789",
+  name: "John",
+  last_name: "Doe",
+  email: "john.doe@example.com",
   ind_country: "57",
   phone: "3003003434",
   country: "CO",
-  invoice: "fac-01", // opcional
   city: "N/A",
   address: "N/A",
   ip: "192.168.100.100",
   currency: "COP",
-  description: "Thu Jun 17 2021 11:37:01 GMT-0400 (hora de Venezuela)",
-  value: 100000,
-  tax: 0,
-  ico: 0,
-  tax_base: 0,
-  url_confirmation: "",
-  method_confirmation: "",
+  invoice: "fac-01",
+  description: "Safetypay test",
+  value: "100000",
+  tax: "0",
+  tax_base: "0",
+  ico: "0",
+  test: "TRUE",
+  url_response: "https://example.com/response",
+  url_confirmation: "https://example.com/confirmation",
+  method_confirmation: "POST",
+});
+```
+
+## Split Payments
+
+This SDK accepts split-related fields as part of the payload for supported operations (for example in bank.create, cash.create, and charge.create).
+
+Official guide:
+
+- https://docs.epayco.co/tools/split-payment
+
+Example payload fields:
+
+```js
+const splitData = {
+  splitpayment: "true",
+  split_app_id: "P_CUST_ID_CLIENTE_APPLICATION",
+  split_merchant_id: "P_CUST_ID_CLIENTE_COMMERCE",
+  split_type: "02",
+  split_primary_receiver: "P_CUST_ID_CLIENTE_APPLICATION",
+  split_primary_receiver_fee: "0",
+  split_rule: "multiple",
+  split_receivers: JSON.stringify([
+    {
+      id: "P_CUST_ID_CLIENTE_1",
+      total: "58000",
+      iva: "8000",
+      base_iva: "50000",
+      fee: "10",
+    },
+  ]),
 };
 
-epayco.safetypay
-  .create(body)
-  .then(function (safetypay) {
-    console.log(safetypay);
-  })
-  .catch(function (err) {
-    console.log("err: " + err);
-  });
+epayco.charge.create(splitData);
 ```
+
+## Notes
+
+- The SDK exposes Promise-based methods.
+- Types for options are available from the package exports.

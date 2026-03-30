@@ -1,58 +1,52 @@
 # Source Tree Analysis
 
-Repository root: `epayco-node-ts/`
+## Annotated Project Tree
 
-```
+```text
 epayco-node-ts/
-├── package.json          # Package metadata, scripts, exports (dist), engines Node >=18
-├── tsconfig.json       # Strict TS; path alias "@/*" -> src/*
-├── tsup.config.ts      # Build: entry src/index.ts, CJS+ESM, dts, Node 18 target
-├── biome.json          # Linter/formatter config
-├── vitest.config.ts    # Tests: tests/**/*.test.ts, alias @ -> src
-├── README.md           # Usage examples (npm package name epayco-sdk-node)
-├── src/                # Library source (published via compiled dist/)
-│   ├── index.ts        # ENTRY: Epayco class, createEpayco, re-exports
-│   ├── types.ts        # EpaycoOptions, option interfaces, ApiResponse
-│   ├── constants.ts    # BASE_URL, BASE_URL_SECURE, BASE_URL_APIFY (env overrides)
-│   ├── http.ts         # authenticate(), sendRequest(), getIp()
-│   ├── crypto.ts       # Encryption helpers for Resource.setData
-│   ├── errors.ts       # EpaycoError + messages from JSON
-│   ├── keylang.ts      # Key mapping for encrypted / Apify payloads
-│   ├── resources/
-│   │   ├── resource.ts # Abstract Resource: request pipeline
-│   │   ├── index.ts    # Re-exports all resource classes
-│   │   ├── token.ts
-│   │   ├── customers.ts
-│   │   ├── plans.ts
-│   │   ├── subscriptions.ts
-│   │   ├── bank.ts     # PSE
-│   │   ├── cash.ts
-│   │   ├── charge.ts
-│   │   ├── daviplata.ts
-│   │   └── safetypay.ts
-│   └── data/
-│       ├── errors.json
-│       ├── keylang.json
-│       ├── keylangs.json
-│       └── keylang_apify.json
-├── tests/              # Vitest specs mirroring resources + crypto/errors
-└── dist/               # Build output (gitignored); not source
+├── src/                          # SDK implementation
+│   ├── index.ts                  # Public facade entrypoint (Epayco + exports)
+│   ├── types.ts                  # Public TypeScript contracts
+│   ├── constants.ts              # Base URLs and env overrides
+│   ├── http.ts                   # Auth + HTTP helpers (fetch)
+│   ├── crypto.ts                 # AES helpers and basic auth encoding
+│   ├── errors.ts                 # EpaycoError class
+│   ├── keylang.ts                # Payload key translation helpers
+│   ├── data/                     # Static data maps (errors, key translations)
+│   └── resources/                # Domain modules (Token, Plans, Cash, etc.)
+├── tests/                        # Vitest unit and contract tests
+│   ├── setup.ts                  # Test client + fetch mock helpers
+│   └── *.test.ts                 # Resource and behavior tests
+├── references/                   # External references/specs (OpenAPI, Postman, reports)
+├── docs/                         # Generated project knowledge for AI workflows
+├── package.json                  # Scripts, metadata, dependencies, engines
+├── tsconfig.json                 # TS strict configuration and path aliases
+├── tsup.config.ts                # Build outputs (CJS/ESM + d.ts)
+├── vitest.config.ts              # Test runner setup and coverage include
+└── biome.json                    # Lint/format config
 ```
 
-## Critical folders
+## Critical Folders and Purpose
 
-| Path                        | Role                                                         |
-| --------------------------- | ------------------------------------------------------------ |
-| `src/index.ts`              | Public API surface and `Epayco` constructor                  |
-| `src/resources/resource.ts` | Shared HTTP/auth/encryption behavior                         |
-| `src/resources/*.ts`        | Per-domain Epayco API wrappers                               |
-| `src/data/*.json`           | Error strings and key-mapping data for payloads              |
-| `tests/`                    | Unit/integration-style tests against mocked or live patterns |
+- `src/resources/`
+  - Domain-oriented SDK surface.
+  - Each file maps to one payment capability.
+- `src/data/`
+  - Runtime dictionaries for error localization and key translation.
+  - Critical to compatibility with provider payload conventions.
+- `tests/`
+  - Prevents regressions in URL composition and resource-level behavior.
+- `references/`
+  - Source of truth for parity planning (OpenAPI and Postman collection).
 
-## Entry points
+## Entry Points and Flows
 
-- **Library:** `src/index.ts` → compiled to `dist/index.js` / `dist/index.cjs` with types.
+- Primary package entry: `src/index.ts`
+- Build entry: `src/index.ts` (configured in `tsup.config.ts`)
+- Test entry pattern: `tests/**/*.test.ts`
 
-## Excluded / non-runtime
+## Integration Paths
 
-- `_bmad/`, `_bmad-output/`, `.cursor/`, `.opencode/`, `.github/skills/` — tooling and BMAD assets, not part of the npm package `files` list.
+- `Resource.request()` -> `authenticate()` -> `sendRequest()`
+- `Resource.request()` -> `setData()` -> (`encrypt` / `langkey` mapping)
+- `Epayco` facade composes all domain resources with a shared config object.

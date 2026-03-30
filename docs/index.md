@@ -1,43 +1,46 @@
 # Project Documentation Index
 
-**Project:** epayco-sdk-node-ts  
-**Scan date:** 2026-03-28  
-**Documentation output language:** English (per BMM `document_output_language`)
+## Project Overview
 
-## Project overview
+- **Name:** epayco-sdk-node-ts
+- **Type:** monolith library
+- **Primary Language:** TypeScript
+- **Architecture:** Facade + domain resources + shared request pipeline
 
-- **Type:** Monolith — single npm package (TypeScript SDK)
-- **Primary language:** TypeScript
-- **Architecture:** Client SDK with facade + resource classes extending shared `Resource` HTTP layer
+## Quick Reference
 
-## Quick reference
+- **Entry Point:** `src/index.ts`
+- **Runtime:** Node.js >= 18
+- **Build:** tsup (ESM + CJS + d.ts)
+- **Tests:** Vitest (`tests/**/*.test.ts`)
 
-| Item            | Detail                                                         |
-| --------------- | -------------------------------------------------------------- |
-| **Tech stack**  | TypeScript, Node ≥ 18, tsup, Vitest, Biome                     |
-| **Entry point** | `src/index.ts` → `createEpayco` / `Epayco`                     |
-| **Pattern**     | Epayco REST client; encrypted and Apify-specific payload paths |
+## Generated Documentation
 
-## Generated documentation
-
-- [Project overview](./project-overview.md)
+- [Project Overview](./project-overview.md)
 - [Architecture](./architecture.md)
-- [Source tree analysis](./source-tree-analysis.md)
-- [Component inventory (SDK surface)](./component-inventory.md)
-- [Development guide](./development-guide.md)
+- [Source Tree Analysis](./source-tree-analysis.md)
+- [Component Inventory](./component-inventory.md)
+- [Development Guide](./development-guide.md)
+- [API Contracts](./api-contracts.md)
+- [Project Scan Report State](./project-scan-report.json)
 
-## Existing documentation
+## Existing Documentation
 
-- [README.md](../README.md) — installation and usage examples (note possible drift vs `plans` API in code)
+- [Repository README](../README.md) - Public usage and examples (contains some legacy content).
+- [Technical Report](../references/TECH_REPORT.md) - Prior analysis and recommendations.
+- [Development Spec](../references/EPAYCO_NODE_TS_DEVELOPMENT_SPEC.md) - Product and engineering roadmap notes.
+- [Cursor Report](../references/CURSOR_REPORT.md) - Additional repository assessment.
+- [OpenAPI Contract](../references/epayco-openapi.yaml) - API contract reference.
 
-## Getting started
+## Getting Started for AI-Assisted Work
 
-1. `pnpm install`
-2. `pnpm build`
-3. `pnpm test`
+1. Read `project-overview.md` for context.
+2. Read `architecture.md` to understand technical constraints and design decisions.
+3. Use `component-inventory.md` to locate the right module before editing.
+4. Use `api-contracts.md` to map SDK methods to upstream ePayco endpoints.
+5. Use `development-guide.md` before running local quality commands.
 
-For integration, instantiate the client with `apiKey`, `privateKey`, `test`, and optional `lang` (`ES` | `EN`). See [development-guide.md](./development-guide.md) for scripts and env vars.
+## Notes
 
-## State file
-
-Workflow state for rescans: [project-scan-report.json](./project-scan-report.json)
+- This documentation reflects the project state as of 2026-03-29.
+- No deep-dive area was requested in this run.

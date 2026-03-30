@@ -1,55 +1,127 @@
-# Architecture — epayco-sdk-node-ts
+# Architecture Document
 
-## Executive summary
+## Executive Summary
 
-The SDK is a **single-package TypeScript library** that exposes a **facade object** (`Epayco`) composed of **resource classes**. Each resource targets a subset of Epayco’s HTTP APIs. All network access goes through an abstract **`Resource`** base class that performs login, builds headers, selects the correct base URL, and optionally transforms payloads (encryption, key language mapping, or Apify-specific mapping).
+This repository implements a Node.js TypeScript SDK for ePayco integrations. The architecture is intentionally compact and relies on a facade that aggregates domain resources, all powered by a shared request pipeline.
 
-## Technology stack
+The system optimizes maintainability by centralizing:
 
-| Category | Technology          | Notes                                 |
-| -------- | ------------------- | ------------------------------------- |
-| Language | TypeScript (strict) | `tsconfig` ES2022, bundler resolution |
-| Runtime  | Node.js ≥ 18        | Relies on global `fetch`              |
-| Build    | tsup                | CJS + ESM, `.d.ts`, sourcemaps        |
-| Tests    | Vitest 4.x          | Node environment, `@` alias           |
-| Quality  | Biome 2.x           | `lint`, `format` scripts              |
+- Authentication
+- HTTP request dispatch
+- Payload translation and encryption rules
+- Base URL selection across ePayco surfaces
 
-## Architecture pattern
+## Architecture Pattern
 
-**Client SDK / adapter layer:** no embedded HTTP server. The design is:
+- Primary Pattern: Facade + Resource Modules + Shared Transport Core
+- Repository Shape: Monolith library
+- Boundary Style: SDK methods mapped to external HTTP endpoints
 
-1. **Configuration** — `EpaycoOptions` validated in `Epayco` constructor (`apiKey`, `privateKey`, `test`, optional `lang`).
-2. **Authentication** — `authenticate()` in `http.ts` posts to `/v1/auth/login` (or Apify login with Basic auth).
-3. **Request execution** — `Resource.request()` obtains a bearer token, merges `extras_epayco`, fills `ip` (via `getIp()` unless card flow), sets `test` mode, then delegates to `setData()` when using secure or Apify paths.
-4. **Payload encoding** — Three paths in `setData()`: Apify key mapping (`langkeyApify`), cash-specific mapping (`langkey` + static fields), or AES encryption of fields (`encrypt` / `encryptHex`) for default API routes.
+## Runtime Components
 
-## Data and configuration
+### Facade Layer
 
-- **No local database** — all persistent state lives on Epayco’s servers.
-- **Types** — `src/types.ts` defines request option interfaces; responses are largely `ApiResponse` (`Record`-like) for flexibility.
-- **Errors** — `EpaycoError` maps numeric codes to localized strings from `src/data/errors.json`.
+- File: `src/index.ts`
+- Responsibilities:
+  - Validates options (`apiKey`, `privateKey`, `test`, `lang`)
+  - Normalizes runtime flags (`test` -> `TRUE|FALSE`)
+  - Instantiates all resource modules with shared config
 
-## API design (SDK surface)
+### Resource Layer
 
-The SDK does not define REST routes; it **consumes** Epayco REST paths inside each resource (e.g. `/recurring/v1/plan/create`). See [component-inventory.md](./component-inventory.md) for the method list.
+- Folder: `src/resources/`
+- Responsibilities:
+  - Expose domain APIs (`create`, `get`, `list`, `delete`, etc.)
+  - Forward endpoint-specific data to shared `request()`
+  - Keep business capability segmentation clear
 
-## Security notes
+### Shared Request Core
 
-- **Secrets:** `privateKey` is used for encryption and login; consumers must not expose it client-side in browsers.
-- **IP:** `getIp()` calls `https://api.ipify.org` when `ip` is not set—consider privacy and reliability for your deployment.
+- File: `src/resources/resource.ts`
+- Responsibilities:
+  - Calls `authenticate()`
+  - Injects common metadata (`extras_epayco`, `test`, `ip`)
+  - Switches payload mode using request flags:
+    - default encrypted flow
+    - `sw` secure legacy flow
+    - `cashData` mode
+    - `card` mode
+    - `apify` mode
+  - Selects final host URL based on mode
 
-## Source tree reference
+### HTTP and Auth Layer
 
-See [source-tree-analysis.md](./source-tree-analysis.md).
+- File: `src/http.ts`
+- Responsibilities:
+  - Performs auth for legacy and Apify paths
+  - Sends JSON requests via native `fetch`
+  - Resolves public IP fallback when needed
 
-## Development workflow
+### Data and Mapping Layer
 
-See [development-guide.md](./development-guide.md).
+- Files:
+  - `src/keylang.ts`
+  - `src/data/keylang.json`
+  - `src/data/keylang_apify.json`
+  - `src/data/errors.json`
+- Responsibilities:
+  - Translate logical field names to provider-specific key contracts
+  - Provide localized error messages by code
 
-## Testing strategy
+## Domain Module Map
 
-Tests live under `tests/`, one file per domain (`charge.test.ts`, `customers.test.ts`, …) plus `crypto.test.ts`, `errors.test.ts`, `epayco.test.ts`. They use Vitest with the same path aliases as production code.
+- `Token`: card tokenization
+- `Customers`: customer lifecycle + card binding operations
+- `Plans`: recurring plan CRUD subset (without update)
+- `Subscriptions`: recurring subscriptions + charge + cancel
+- `Bank`: PSE and bank listing/lookup
+- `Cash`: cash payment providers (efecty/baloto/gana/redservi/puntored/sured)
+- `Charge`: charge and transaction lookup
+- `Safetypay`: Safetypay processing
+- `Daviplata`: Daviplata create/confirm operations
 
-## Deployment
+## Data Architecture
 
-The artifact is an **npm package** (`prepublishOnly` runs `pnpm build`). There is **no Dockerfile or GitHub Actions workflow** in this repository at scan time—release process is undefined in-repo.
+No internal database is used by this SDK. Data architecture is request/response-oriented:
+
+- Input contracts are typed in `src/types.ts`.
+- Outbound payloads are transformed dynamically before transport.
+- Responses are returned as generic API objects (`ApiResponse`), with domain-specific interpretation left to consumers.
+
+## API Design Characteristics
+
+- Synchronous-looking async methods returning `Promise<ApiResponse>`.
+- Domain-consistent method naming (`create/get/list/delete/cancel/confirm`).
+- Host and payload concerns hidden from SDK consumers.
+
+## Security and Compliance Decisions
+
+- AES compatibility mode retained for legacy encrypted paths.
+- Basic Auth and Bearer token flows handled internally.
+- Sensitive credentials are passed through constructor config; no persistence layer.
+
+## Testing Strategy
+
+- Unit-focused tests with mocked `fetch`.
+- Coverage emphasis on transport composition and route contracts.
+- No mandatory live integration tests in default CI scripts.
+
+## Deployment and Distribution
+
+- Distributed as npm package.
+- Build output produced with `tsup` to support ESM and CJS consumers.
+- Node.js 18+ required.
+
+## Architecture Decisions and Trade-offs
+
+- Decision: centralize request complexity in `Resource`.
+  - Benefit: lower duplication and faster endpoint additions.
+  - Cost: flag-based request behavior can become harder to reason about at scale.
+
+- Decision: keep broad `ApiResponse` for consumer flexibility.
+  - Benefit: supports inconsistent upstream contracts.
+  - Cost: reduced compile-time guarantees for downstream app logic.
+
+- Decision: preserve key translation dictionaries.
+  - Benefit: shields consumers from heterogeneous API payload naming.
+  - Cost: requires ongoing mapping maintenance as API evolves.
